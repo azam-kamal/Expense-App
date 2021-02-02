@@ -3,8 +3,15 @@ import 'widgets/new_transaction.dart';
 import 'models/transaction.dart';
 import 'widgets/transaction_list.dart';
 import 'widgets/chart.dart';
+import 'package:flutter/services.dart';
+import "dart:io";
 
-void main() => runApp(MyApp());
+void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SystemChrome.setPreferredOrientations(
+  //     [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -79,29 +86,79 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
+  bool _showChart = true;
+
   @override
   Widget build(BuildContext context) {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    final appbar = AppBar(
+      title: Text('Personal Expense'),
+      actions: <Widget>[
+        IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () => _startNewTransaction(context)),
+      ],
+    );
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Personal Expense'),
-        actions: <Widget>[
-          IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () => _startNewTransaction(context)),
-        ],
-      ),
+      appBar: appbar,
       body: SingleChildScrollView(
         child: Column(
-          //mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Chart(_recentTransactions),
-            TransactionList(_userTransactions, deleteTransaction)
+            Row(
+              children: <Widget>[
+                if (isLandscape) Text('Show Chart'),
+                if (isLandscape)
+                  Switch.adaptive(
+                      activeColor: Theme.of(context).accentColor,
+                      value: _showChart,
+                      onChanged: (val) {
+                        setState(() {
+                          _showChart = val;
+                        });
+                      })
+              ],
+            ),
+            if (isLandscape)
+              _showChart
+                  ? Container(
+                      height: (MediaQuery.of(context).size.height -
+                              appbar.preferredSize.height -
+                              MediaQuery.of(context).padding.top) *
+                          1,
+                      //1 for lanscape 0.4 for portrit
+                      child: Chart(_recentTransactions))
+                  : Container(
+                      height: (MediaQuery.of(context).size.height -
+                              appbar.preferredSize.height -
+                              MediaQuery.of(context).padding.top) *
+                          //0.6,
+                          0.7,
+                      child: TransactionList(
+                          _userTransactions, deleteTransaction)),
+            if (isLandscape == false)
+              Container(
+                  height: (MediaQuery.of(context).size.height -
+                          appbar.preferredSize.height -
+                          MediaQuery.of(context).padding.top) *
+                      0.4,
+                  //1 for lanscape 0.4 for portrit
+                  child: Chart(_recentTransactions)),
+            if (isLandscape == false)
+              Container(
+                  height: (MediaQuery.of(context).size.height -
+                          appbar.preferredSize.height -
+                          MediaQuery.of(context).padding.top) *
+                      //0.6,
+                      0.6,
+                  child: TransactionList(_userTransactions, deleteTransaction))
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: Platform.isIOS ? Container(): FloatingActionButton(
           child: Icon(Icons.add),
           onPressed: () => _startNewTransaction(context)),
     );
